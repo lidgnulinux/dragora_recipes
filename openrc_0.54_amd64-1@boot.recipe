@@ -1,0 +1,92 @@
+# Build recipe for openrc.
+#
+# Copyright (c) 2017 Mateus P. Rodrigues <mprodrigues@dragora.org>.
+# Copyright (c) 2017-2019, 2021-2022 Matias Fonzo, <selk@dragora.org>.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Exit immediately on any error
+set -e
+
+program=openrc
+version=0.54
+release=1
+
+# Define a category for the output of the package name
+pkgcategory=boot
+
+tarname=${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/OpenRC/openrc/archive/$tarname
+
+description="
+openrc (dependency-based init system).
+
+OpenRC is a dependency-based init system that works
+with the system-provided init program, normally /sbin/init.
+"
+
+homepage=https://github.com/OpenRC/openrc
+license="BSD-2-Clause license"
+
+# Source documentation
+# docs="COPYING README.md"
+# docsdir="${docdir}/${program}-${version}"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    rm -rf BUILD
+    mkdir BUILD
+    cd BUILD
+
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0001-call-sbin-mkmntdirs-in-localmount-OpenRC-service.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0002-fsck-don-t-add-C0-to-busybox-fsck.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0003-rc-pull-in-sysinit-and-boot-as-stacked-levels-when-n.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0004-make-consolefont-service-compatible-with-busyboxs-se.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0005-Support-early-loading-of-keymap-if-kbd-is-installed.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0006-Add-support-for-starting-services-in-a-specified-VRF.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0007-Clean-up-staticroute-config-remove-irrelevant-parts-.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0008-bootmisc-switch-wipe_tmp-setting-to-no-by-default.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/0009-Based-on-the-vrf-patch-it-adds-support-to-run-servic.patch
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/supervise-daemon-defaults.patch 
+    patch -p1 -d .. < /home/dragora/build/openrc_patches/sysctl-readme.patch 
+
+    CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+    meson setup $configure_args \
+    	-Daudit=disabled \
+    	-Dnewnet=false \
+    	-Dselinux=disabled \
+    	-Dsysvinit=true \
+    	-Dzsh-completions=false \
+	-Dpam=false \
+    	--libdir=/usr/lib64 \
+	--sbindir=/sbin \
+    	--mandir=/usr/man \
+    	--prefix=/usr \
+    	--sysconfdir=/etc/openrc \
+    	--libexecdir=/usr/libexec/rc \
+	..
+
+    ninja -j${jobs}
+    DESTDIR="$destdir" ninja -j${jobs} install
+
+    cd ..
+}
