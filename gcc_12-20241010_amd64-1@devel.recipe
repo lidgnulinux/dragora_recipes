@@ -1,0 +1,206 @@
+# Build recipe for GCC.
+#
+# Copyright (c) 2015-2023 Matias Fonzo, <selk@dragora.org>.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Exit immediately on any error
+set -e
+
+program=gcc
+version=12-20241010
+release=1
+
+# Define a category for the output of the package name
+pkgcategory=devel
+
+tarname=${program}-${version}.tar.xz
+
+# Remote source(s)
+fetch="https://mirror.marwan.ma/gcc/snapshots/${version}/$tarname"
+
+homepage=https://www.gnu.org/software/gcc
+license="GPLv2+, GPLv3+, LGPLv2.1, LGPLv3 + GCC runtime library exception"
+
+description="
+The GNU C Compiler Collection.
+
+The GNU Compiler Collection (GCC) is a compiler system produced by the
+GNU Project supporting various programming languages.  GCC is a key
+component of the GNU toolchain.  The Free Software Foundation (FSF)
+distributes GCC under the GNU General Public License (GNU GPL).
+
+For more information about GCC, visit:  $homepage
+"
+
+# Source documentation
+docs="COPYING* README"
+docsdir="${docdir}/${program}-${version}"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    # Apply specific patches for the support in musl.
+    # https://port70.net/~nsz/musl/gcc-11.1.0/
+
+    patch -Np1 -i "${worktree}/patches/gcc/0001-ssp_nonshared.diff"
+    patch -Np1 -i "${worktree}/patches/gcc/0002-posix_memalign.diff"
+    patch -Np1 -i "${worktree}/patches/gcc/0003-j2.diff"
+    patch -Np1 -i "${worktree}/patches/gcc/0004-static-pie.diff"
+    patch -Np1 -i "${worktree}/patches/gcc/0005-m68k-sqrt.diff"
+
+    # Create a separate build directory
+    rm -rf BUILD
+    mkdir BUILD
+    cd BUILD
+
+    # System-dependent
+    MACHINE="$(gcc -dumpmachine)"
+
+    ../configure SED=sed \
+    CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" CXXFLAGS="$QICXXFLAGS" LDFLAGS="$QILDFLAGS" \
+     $configure_args \
+     --libdir=/usr/lib64 \
+     --mandir=$mandir \
+     --infodir=$infodir \
+     --enable-bootstrap \
+     --enable-languages=c,c++,objc,obj-c++ \
+     --enable-clocale=generic \
+     --enable-threads=posix \
+     --enable-cet=auto \
+     --enable-initfini-array \
+     --enable-tls \
+     --enable-nls \
+     --enable-lto \
+     --enable-plugin \
+     --enable-objc-gc \
+     --enable-libstdcxx-time \
+     --enable-checking=release \
+     --enable-fully-dynamic-string \
+     --enable-default-ssp \
+     --enable-default-pie \
+     --enable-libssp \
+     --enable-initfini-array \
+     --disable-symvers \
+     --disable-libitm \
+     --disable-gnu-indirect-function \
+     --disable-libstdcxx-pch \
+     --disable-libsanitizer \
+     --disable-libcilkrts \
+     --disable-install-libiberty \
+     --with-system-zlib \
+     --with-linker-hash-style=gnu \
+     --build=$MACHINE \
+     --host=$MACHINE \
+     --target=$MACHINE \
+     --with-multilib-list=m64 \
+     --with-arch=x86-64 \
+     --disable-multilib \
+     --with-tune=generic
+
+    make -j4 V=1 \
+     BOOT_CFLAGS="$QICFLAGS" \
+     BOOT_CXXFLAGS="$QICXXFLAGS" \
+     BOOT_LDFLAGS="$QILDFLAGS" \
+     BOOT_CPPFLAGS="$QICPPFLAGS"
+
+    make -j4 V=1 DESTDIR="$destdir" install
+
+    # Delete non-shared version of libssp (provided on the musl package)
+    rm -f "${destdir}/usr/lib64"/libssp_nonshared.a
+
+    # Strip ELF executables only excluding shared objects
+    find "$destdir" -type f | xargs file | awk '/ELF/ && /executable/' | \
+     cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null || true
+
+    # Strip static libraries in order to reduce the package size
+    find "$destdir" -type f | xargs file | awk '/current ar archive/' | \
+     cut -f 1 -d : | xargs strip --strip-debug 2> /dev/null || true
+
+    cd ../
+
+    # Move misplaced file(s) for GDB
+    # mkdir -p "${destdir}/usr/share/gdb/auto-load/usr/lib${libSuffix}"
+    # mv "${destdir}/usr/lib${libSuffix}"/*-gdb.py \
+    #    "${destdir}/usr/share/gdb/auto-load/usr/lib${libSuffix}"
+
+    # Provide compatibility and make soft links for package size
+    (
+        cd "${destdir}/usr/bin" || exit 1
+
+        mv gcc gcc-${version}
+        ln -sf gcc-${version} gcc
+        ln -sf gcc cc
+        ln -sf gcc-${version} ${MACHINE}-gcc
+        ln -sf gcc-${version} ${MACHINE}-gcc-${version}
+
+        mv g++ g++-gcc-${version}
+        ln -sf g++-gcc-${version} g++
+        ln -sf g++ c++
+        ln -sf g++-gcc-${version} ${MACHINE}-g++
+        ln -sf g++-gcc-${version} ${MACHINE}-c++
+
+        mv gcc-ar gcc-ar-${version}
+        ln -sf gcc-ar-${version} gcc-ar
+        ln -sf gcc-ar-${version} ${MACHINE}-gcc-ar
+
+        mv gcc-nm gcc-nm-${version}
+        ln -sf gcc-nm-${version} gcc-nm
+        ln -sf gcc-nm-${version} ${MACHINE}-gcc-nm
+
+        mv gcc-ranlib gcc-ranlib-${version}
+        ln -sf gcc-ranlib-${version} gcc-ranlib
+        ln -sf gcc-ranlib-${version} ${MACHINE}-gcc-ranlib
+    )
+    (
+        cd "${destdir}/usr/lib64" && ln -sf ../bin/cpp .
+    )
+
+    unset -v MACHINE
+
+    # Insert wrapper scripts for handling C89 and C99 invocations
+    # cat "${worktree}/archive/gcc/c89" > "${destdir}/usr/bin/c89"
+    # cat "${worktree}/archive/gcc/c99" > "${destdir}/usr/bin/c99"
+    # chmod 755 "${destdir}"/usr/bin/c?9
+
+    # Compress info documents deleting index file for the package
+    if test -d "${destdir}/$infodir"
+    then
+        rm -f "${destdir}/${infodir}/dir"
+        lzip -9 "${destdir}/${infodir}"/* || true
+    fi
+
+    # Compress and link man pages (if needed)
+    if test -d "${destdir}/$mandir"
+    then
+        (
+            cd "${destdir}/$mandir"
+            find . -type f -exec lzip -9 {} +
+            find . -type l | while read -r file
+            do
+                ln -sf "$(readlink -- "$file").lz" "${file}.lz"
+                rm -- "$file"
+            done
+        )
+    fi
+
+    # Copy documentation
+    # mkdir -p "${destdir}/$docsdir"
+    # cp -p $docs "${destdir}/$docsdir"
+}
