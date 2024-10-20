@@ -1,0 +1,40 @@
+# Build recipe for dwl.
+#
+# Exit immediately on any error
+set -e
+
+program=dwl
+version=0.7
+release=1
+
+# Define a category for the output of the package name
+pkgcategory=wayland-compositor
+
+tarname=${program}-v${version}.tar.gz
+
+# Remote source(s)
+fetch=https://codeberg.org/dwl/dwl/releases/download/v${version}/$tarname
+
+description="dwm for Wayland."
+
+homepage=https://codeberg.org/dwl/dwl
+license="GPL"
+
+srcdir=${program}-v${version}
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    patch < "${worktree}/patches/dwl/vanitygaps-0.7.patch"
+    vim config.def.h
+
+    make
+    make DESTDIR="$destdir" PREFIX=/usr install
+}
+
