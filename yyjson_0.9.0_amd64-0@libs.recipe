@@ -1,0 +1,48 @@
+# Build recipe for yyjson.
+#
+# Exit immediately on any error
+set -e
+
+program=yyjson
+version=0.9.0
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=libs
+
+tarname=${program}-${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/ibireme/yyjson/archive/$version/$tarname
+
+description="High performance JSON library written in ANSI C"
+
+homepage=https://github.com/ibireme/yyjson
+license="MIT"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+	
+    cmake -B builddir -G Ninja \
+    	-DCMAKE_INSTALL_PREFIX=/usr \
+    	-DCMAKE_BUILD_TYPE=MinSizeRel \
+    	-DBUILD_SHARED_LIBS=ON \
+    	-DYYJSON_BUILD_TESTS="OFF"
+
+    cmake -B builddir-static -G Ninja \
+    	-DCMAKE_INSTALL_PREFIX=/usr \
+    	-DCMAKE_BUILD_TYPE=MinSizeRel
+
+    cmake --build builddir
+    cmake --build builddir-static
+
+    DESTDIR="$destdir" cmake --install builddir
+    DESTDIR="$destdir" cmake --install builddir-static
+}
+
