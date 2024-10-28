@@ -1,0 +1,69 @@
+# Build recipe for elogind.
+#
+
+# Exit immediately on any error
+set -e
+
+program=elogind
+version=252.9
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=daemon
+
+tarname=${program}-v${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/elogind/elogind/archive/v$version/$tarname
+
+description="Standalone fork of systemd's elogind"
+
+homepage=https://github.com/elogind/elogind
+license="GPL-2.0-or-later LGPL-2.1-or-later"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    rm -rf BUILD
+    mkdir BUILD
+    cd BUILD
+
+    patch -p1 -d .. < "${worktree}/patches/elogind/getdents.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/gshadow.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/lfs64.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/more-strerror_r.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/no-bash.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/rlim-max.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/rpath.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/sigfillset.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/statx.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/strerror_r.patch" 
+    patch -p1 -d .. < "${worktree}/patches/elogind/re-add_GNU_basename_macro_for_musl.patch" 
+
+    CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+    meson setup $configure_args \
+        -Ddefault-hierarchy=unified \
+        -Ddefault-kill-user-processes=false \
+        -Dhalt-path=/sbin/halt \
+        -Dman=false \
+        -Dpolkit=true \
+        -Dreboot-path=/sbin/reboot \
+        -Dtests=false \
+        -Dpamconfdir=/etc/pam.d \
+        -Drootlibdir=/usr/lib \
+        -Drootlibexecdir=/usr/libexec/elogind \
+        -Dudevrulesdir=/lib/udev/rules.d \
+        -Dsplit-usr=false \
+	..
+
+    ninja -j2
+    DESTDIR="$destdir" ninja -j2 install
+
+    cd ..
+}
