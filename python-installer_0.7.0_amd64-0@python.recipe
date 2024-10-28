@@ -1,0 +1,40 @@
+# Build recipe for python-installer.
+
+# Exit immediately on any error
+set -e
+
+program=installer
+version=0.7.0
+release=0
+
+pkgname=python-${program}
+
+# Define a category for the output of the package name
+pkgcategory=python
+
+# Remote source(s)
+fetch=https://files.pythonhosted.org/packages/py3/i/installer/installer-$version-py3-none-any.whl
+
+description="low-level library for installing from a Python wheel distribution"
+
+homepage=https://github.com/pypa/installer
+license=MIT
+
+build()
+{
+	mkdir -p "${worktree}/build/installer"
+	unzip -d "${worktree}/build/installer" "${tardir}/installer-$version-py3-none-any.whl"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+	
+	cd "${worktree}/build/installer"	
+	patch -p1 < "${worktree}/patches/python-installer/default-bytecode-levels.patch" 
+
+	local sitedir="/usr/lib/python3.9/site-packages"
+        mkdir -p "$destdir/$sitedir"
+	cp -a "${worktree}"/build/installer/installer* "$destdir/$sitedir"  
+
+        python3 -m compileall "$destdir/$sitedir"
+}
+

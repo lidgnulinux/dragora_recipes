@@ -1,0 +1,50 @@
+# Build recipe for acpi tool.
+#
+# Exit immediately on any error
+set -e
+
+program=libiconv
+version=1.17
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=libs
+
+tarname=${program}-${version}.tar.gz
+
+# Remote source(s)
+fetch=https://ftp.gnu.org/gnu/libiconv/$tarname
+
+description="GNU charset conversion library for libc which doesn't implement it"
+
+homepage=https://www.gnu.org/software/libiconv
+license="LGPL-2.1-or-later"
+
+srcdir=${program}-${version}
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+	
+    ./configure \
+	--prefix=/usr \
+	--disable-static \
+	--disable-nls \
+	--enable-extra-encodings
+    
+    sed -i 's|^hardcode_libdir__flag_spec=.*|hardcode_libdir__flag_spec=""|g' libtool
+    sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+
+    make
+    make DESTDIR="$destdir" install
+
+    mkdir "$destdir"/usr/include/gnu-libiconv
+    mv "$destdir"/usr/include/*.h "$destdir"/usr/include/gnu-libiconv
+    mv "$destdir"/usr/bin/iconv "$destdir"/usr/bin/gnu-iconv
+}
+
