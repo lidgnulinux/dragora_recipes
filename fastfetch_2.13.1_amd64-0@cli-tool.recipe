@@ -1,0 +1,44 @@
+# Build recipe for fastfetch.
+#
+# Exit immediately on any error
+set -e
+
+program=fastfetch
+version=2.13.1
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=cli-tool
+
+tarname=${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/fastfetch-cli/fastfetch/archive/refs/tags/$tarname
+
+description="High performance JSON library written in ANSI C"
+
+homepage=https://github.com/fastfetch-cli/fastfetch
+license="MIT"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+	
+    rm -rf src/3rdparty/yyjson
+
+    cmake -B build -G Ninja \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_INSTALL_LIBDIR=lib \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DENABLE_SYSTEM_YYJSON=ON \
+	-DENABLE_DIRECTX_HEADERS=OFF
+
+    cmake --build build --target fastfetch --target flashfetch
+
+    DESTDIR="$destdir" cmake --install build
+}
