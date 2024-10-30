@@ -1,0 +1,38 @@
+# Build recipe for busybox.
+#
+# Exit immediately on any error
+set -e
+
+program=busybox
+version=1.37.0
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=tools
+
+tarname=${program}-${version}.tar.bz2
+
+# Remote source(s)
+fetch=https://busybox.net/downloads/$tarname
+
+description="busybox"
+
+homepage=https://busybox.net
+license="GPL-2.0-only"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    make -j1 mrproper
+    cat "${worktree}/archive/busybox/config" > .config
+
+    make -j2
+    mkdir  -p "$destdir"/usr/bin/
+    install -Dm0755 busybox "$destdir"/usr/bin/busybox
+}
