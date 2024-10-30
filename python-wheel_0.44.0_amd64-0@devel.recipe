@@ -1,0 +1,37 @@
+# Build recipe for python-wheel.
+#
+
+# Exit immediately on any error
+set -e
+
+program=python-wheel
+version=0.44.0
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=devel
+
+tarname=${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/pypa/wheel/archive/$tarname
+
+description="wheel python"
+
+srcdir=wheel-${version}
+
+homepage=https://pypi.python.org/pypi/wheel
+license="MIT"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    python3 -m build --wheel --no-isolation
+    python3 -m installer --destdir="$destdir" dist/*.whl
+}
