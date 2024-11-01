@@ -1,0 +1,35 @@
+# Build recipe for pulsemixer.
+#
+
+# Exit immediately on any error
+set -e
+
+program=pulsemixer
+version=1.5.1
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=tool
+
+tarname=${version}.tar.gz
+
+# Remote source(s)
+fetch=https://github.com/GeorgeFilipkin/pulsemixer/archive/$tarname
+
+description="CLI and curses mixer for PulseAudio"
+
+homepage=https://github.com/GeorgeFilipkin/pulsemixer
+license="MIT"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    python3 setup.py build
+    python3 setup.py install --prefix=/usr --root="$destdir" --optimize=1
+}
