@@ -31,6 +31,14 @@ build()
 	
     rm -rf src/3rdparty/yyjson
 
+    # patch to add qi packages detection
+    # generate packages list using this command :
+
+    # # mkdir /var/qi
+    # # find -name "*.recipe" | sed 's/.recipe$//' > /var/qi/installed_packages.list 
+
+    patch -p1 < "${worktree}/patches/fastfetch/qi_packages_detection.patch"
+
     cmake -B build -G Ninja \
 	-DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_INSTALL_LIBDIR=lib \
