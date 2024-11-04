@@ -57,17 +57,17 @@ build()
     mkdir BUILD
     cd BUILD
 
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0001-call-sbin-mkmntdirs-in-localmount-OpenRC-service.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0002-fsck-don-t-add-C0-to-busybox-fsck.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0003-rc-pull-in-sysinit-and-boot-as-stacked-levels-when-n.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0004-make-consolefont-service-compatible-with-busyboxs-se.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0005-Support-early-loading-of-keymap-if-kbd-is-installed.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0006-Add-support-for-starting-services-in-a-specified-VRF.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0007-Clean-up-staticroute-config-remove-irrelevant-parts-.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0008-bootmisc-switch-wipe_tmp-setting-to-no-by-default.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/0009-Based-on-the-vrf-patch-it-adds-support-to-run-servic.patch
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/supervise-daemon-defaults.patch 
-    patch -p1 -d .. < /home/dragora/build/openrc_patches/sysctl-readme.patch 
+    patch -p1 -d .. < "${worktree}/patches/openrc/0001-call-sbin-mkmntdirs-in-localmount-OpenRC-service.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0002-fsck-don-t-add-C0-to-busybox-fsck.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0003-rc-pull-in-sysinit-and-boot-as-stacked-levels-when-n.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0004-make-consolefont-service-compatible-with-busyboxs-se.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0005-Support-early-loading-of-keymap-if-kbd-is-installed.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0006-Add-support-for-starting-services-in-a-specified-VRF.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0007-Clean-up-staticroute-config-remove-irrelevant-parts-.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0008-bootmisc-switch-wipe_tmp-setting-to-no-by-default.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/0009-Based-on-the-vrf-patch-it-adds-support-to-run-servic.patch"
+    patch -p1 -d .. < "${worktree}/patches/openrc/supervise-daemon-defaults.patch" 
+    patch -p1 -d .. < "${worktree}/patches/openrc/sysctl-readme.patch" 
 
     CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
     meson setup $configure_args \
