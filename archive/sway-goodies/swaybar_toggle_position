@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cekk="$(grep 'position top' ~/.config/sway/config)"
+
+if [[ -n $cekk ]]
+then
+	sed -i -e '/position/s/top/bottom/' ~/.config/sway/config; swaymsg reload
+else
+	sed -i -e '/position/s/bottom/top/' ~/.config/sway/config; swaymsg reload
+fi

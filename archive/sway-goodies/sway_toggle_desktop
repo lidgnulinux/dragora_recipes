@@ -1,0 +1,28 @@
+#!/bin/bash
+
+unminimize () {
+
+	swaymsg -q [app_id='.*'] focus	
+
+}
+
+minimize () {
+
+	swaymsg -q [app_id='.*'] move scratchpad
+
+}
+
+focus () { 
+	swaymsg -t get_tree | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.focused)' | jq -r '.app_id'
+}
+
+if [[ $(focus) == null ]]; then
+	unminimize
+else
+	minimize
+fi
+
+# Note : 
+# for all workspaces use these :
+#	swaymsg -q [app_id='.*'] focus	
+#	swaymsg -q [app_id='.*'] move scratchpad

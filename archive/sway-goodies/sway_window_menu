@@ -1,0 +1,34 @@
+#!/bin/bash
+
+menu=" Floating Toggle\n Minimize\n Border Toggle\n Move Workspace\n Close"
+
+active=$(/usr/bin/swaymsg -t get_tree | jq -r 'recurse(.nodes[]?, .floating_nodes[]?) | select(.focused) | .rect | "\(.x),\(.y)"')
+
+x_cord=$(echo "$active" | cut -d ',' -f 1)
+y_cord=$(echo "$active" | sed -e 's/^.*,//g')
+
+cekk="$(grep 'position top' ~/.config/sway/config)"
+
+if [[ -n $cekk ]]
+then
+	selected=$(echo -e $menu | wofi -d -x $(expr $x_cord + 10) -y $(expr $y_cord - 20) -W 10% --prompt="Window Menu" --lines 6 | awk '{print tolower ($2)}') 
+else
+	selected=$(echo -e $menu | wofi -d -x $(expr $x_cord + 10) -y $(expr $y_cord + 10) -W 10% --prompt="Window Menu" --lines 6 | awk '{print tolower ($2)}') 
+fi
+
+swspc() {
+	wspc=$(wofi -d --prompt="Workspace" --lines 2 -W 10%); /usr/bin/swaymsg move window workspace $wspc
+}
+
+case $selected in
+	minimize)
+		exec swaymsg move scratchpad;;
+	close)
+		exec swaymsg kill;;
+	floating)
+		exec swaymsg floating toggle;;
+	border)
+		exec swaymsg border toggle;;
+	move)
+		swspc;;
+esac

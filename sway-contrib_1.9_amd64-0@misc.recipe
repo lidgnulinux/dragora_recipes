@@ -1,0 +1,36 @@
+# Build recipe for sway-contrib.
+#
+# Exit immediately on any error
+set -e
+
+program=sway-contrib
+version=1.9
+release=0
+description="A collection of user-contributed scripts for Sway"
+homepage="https://github.com/OctopusET/sway-contrib"
+license="MIT"
+pkgcategory=misc
+tarname=${version}.tar.gz
+fetch="https://github.com/OctopusET/sway-contrib/archive/$tarname"
+
+build() {
+
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+    
+	mkdir -p "${destdir}"/usr/share/sway-contrib
+	mkdir -p "${destdir}"/usr/bin
+
+	install -Dm755 -t "$destdir"/usr/share/sway-contrib/ \
+		autoname-workspaces.py \
+		firefox-focus-monitor.py \
+		inactive-windows-transparency.py \
+		layout-per-window.py \
+		switch-top-level.py
+
+	install -Dm755 grimshot -t "$destdir"/usr/bin/
+}

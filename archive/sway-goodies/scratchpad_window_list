@@ -1,0 +1,17 @@
+#!/bin/sh
+
+jwq() {
+        jq -r 'recurse(.nodes[]?) | select(.name == "__i3_scratch").floating_nodes[].'$1', select(.name == "__i3_scratch").floating_nodes[].window_properties.title'
+}
+
+app_id=$(swaymsg -t get_tree | jwq app_id | grep -v null)
+
+win_id=$(swaymsg -t get_tree | jwq id | grep -v null)
+
+title=$(swaymsg -t get_tree | jwq name | grep -v null)
+
+height=$(echo "$win_id" | wc -l)
+
+selected=$(paste -d " " <(printf %s "$win_id") <(printf %s "$app_id") <(printf %s "$title") | wofi -d  --lines $(expr $height + 1) -p "Minimized Window(s)" -W 50% | cut -d ' ' -f 1)
+
+swaymsg -q [con_id="$selected"] focus
