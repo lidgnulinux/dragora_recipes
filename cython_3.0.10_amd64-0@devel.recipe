@@ -30,6 +30,5 @@ build()
     # Set sane permissions
     chmod -R u+w,go-w,a+rX-s .
 
-    python3 -m build --wheel --no-isolation
-    python3 -m installer --destdir="$destdir" dist/*.whl
+    python3 setup.py install --root="$destdir" --prefix=/usr
 }
