@@ -1,0 +1,124 @@
+diff -bur fastfetch-2.29.0/doc/json_schema.json fastfetch-2.29.0-new/doc/json_schema.json
+--- fastfetch-2.29.0/doc/json_schema.json       2024-11-04 14:02:18.000000000 +0700
++++ fastfetch-2.29.0-new/doc/json_schema.json   2024-11-10 18:21:08.846193989 +0700
+@@ -1949,6 +1949,7 @@
+                                                 "opkg",
+                                                 "pacman",
+                                                 "paludis",
++                                                "qi",
+                                                 "pkg",
+                                                 "pkgtool",
+                                                 "rpm",
+diff -bur fastfetch-2.29.0/src/detection/packages/packages.h fastfetch-2.29.0-new/src/detection/packages/packages.h
+--- fastfetch-2.29.0/src/detection/packages/packages.h  2024-11-04 14:02:18.000000000 +0700
++++ fastfetch-2.29.0-new/src/detection/packages/packages.h      2024-11-10 18:21:47.719727827 +0700
+@@ -36,6 +36,7 @@
+     uint32_t winget;
+     uint32_t xbps;
+     uint32_t pacstall;
++    uint32_t qi;
+
+     uint32_t all; //Make sure this goes last
+
+diff -bur fastfetch-2.29.0/src/detection/packages/packages_linux.c fastfetch-2.29.0-new/src/detection/packages/packages_linux.c
+--- fastfetch-2.29.0/src/detection/packages/packages_linux.c    2024-11-04 14:02:18.000000000 +0700
++++ fastfetch-2.29.0-new/src/detection/packages/packages_linux.c        2024-11-10 18:23:29.198118682 +0700
+@@ -573,6 +573,7 @@
+     }
+     if (!(options->disabled & FF_PACKAGES_FLAG_LINGLONG_BIT)) packageCounts->linglong += getNumElements(baseDir, "/var/lib/linglong/repo/refs/heads/main", DT_DIR);
+     if (!(options->disabled & FF_PACKAGES_FLAG_PACSTALL_BIT)) packageCounts->pacstall += getNumElements(baseDir, "/var/lib/pacstall/metadata", DT_REG);
++    if (!(options->disabled & FF_PACKAGES_FLAG_QI_BIT)) packageCounts->qi += getNumStrings(baseDir, "/var/qi/installed_packages.list", "\n", "qi");
+ }
+
+ static void getPackageCountsRegular(FFstrbuf* baseDir, FFPackagesResult* packageCounts, FFPackagesOptions* options)
+diff -bur fastfetch-2.29.0/src/modules/packages/option.h fastfetch-2.29.0-new/src/modules/packages/option.h
+--- fastfetch-2.29.0/src/modules/packages/option.h      2024-11-04 14:02:18.000000000 +0700
++++ fastfetch-2.29.0-new/src/modules/packages/option.h  2024-11-10 18:24:13.687889445 +0700
+@@ -33,6 +33,7 @@
+     FF_PACKAGES_FLAG_GUIX_BIT = 1 << 23,
+     FF_PACKAGES_FLAG_LINGLONG_BIT = 1 << 24,
+     FF_PACKAGES_FLAG_PACSTALL_BIT = 1 << 25,
++    FF_PACKAGES_FLAG_QI_BIT = 1 << 26,
+ } FFPackagesFlags;
+
+ typedef struct FFPackagesOptions
+diff -bur fastfetch-2.29.0/src/modules/packages/packages.c fastfetch-2.29.0-new/src/modules/packages/packages.c
+--- fastfetch-2.29.0/src/modules/packages/packages.c    2024-11-04 14:02:18.000000000 +0700
++++ fastfetch-2.29.0-new/src/modules/packages/packages.c        2024-11-10 18:33:58.819274397 +0700
+@@ -4,7 +4,7 @@
+ #include "modules/packages/packages.h"
+ #include "util/stringUtils.h"
+
+-#define FF_PACKAGES_NUM_FORMAT_ARGS 38
++#define FF_PACKAGES_NUM_FORMAT_ARGS 39
+
+ void ffPrintPackages(FFPackagesOptions* options)
+ {
+@@ -73,6 +73,7 @@
+         FF_PRINT_PACKAGE_NAME(guixHome, "guix-home")
+         FF_PRINT_PACKAGE(linglong)
+         FF_PRINT_PACKAGE(pacstall)
++        FF_PRINT_PACKAGE(qi)
+
+         putchar('\n');
+     }
+@@ -121,6 +122,7 @@
+             FF_FORMAT_ARG(flatpakAll, "flatpak-all"),
+             FF_FORMAT_ARG(brewAll, "brew-all"),
+             FF_FORMAT_ARG(guixAll, "guix-all"),
++            FF_FORMAT_ARG(counts.qi, "qi"),
+         }));
+     }
+
+@@ -193,6 +195,9 @@
+                     FF_TEST_PACKAGE_NAME(PKG)
+                     FF_TEST_PACKAGE_NAME(PKGTOOL)
+                     break;
++                case 'Q': if (false);
++                    FF_TEST_PACKAGE_NAME(QI)
++                    break;
+                 case 'R': if (false);
+                     FF_TEST_PACKAGE_NAME(RPM)
+                     break;
+@@ -303,6 +308,9 @@
+                             FF_TEST_PACKAGE_NAME(PKG)
+                             FF_TEST_PACKAGE_NAME(PKGTOOL)
+                             break;
++                        case 'Q': if (false);
++                            FF_TEST_PACKAGE_NAME(QI)
++                            break;
+                         case 'R': if (false);
+                             FF_TEST_PACKAGE_NAME(RPM)
+                             break;
+@@ -366,6 +374,7 @@
+         FF_TEST_PACKAGE_NAME(SORCERY)
+         FF_TEST_PACKAGE_NAME(WINGET)
+         FF_TEST_PACKAGE_NAME(XBPS)
++        FF_TEST_PACKAGE_NAME(QI)
+         #undef FF_TEST_PACKAGE_NAME
+     }
+ }
+@@ -418,12 +427,13 @@
+     FF_APPEND_PACKAGE_COUNT(guixHome)
+     FF_APPEND_PACKAGE_COUNT(linglong)
+     FF_APPEND_PACKAGE_COUNT(pacstall)
++    FF_APPEND_PACKAGE_COUNT(qi)
+     yyjson_mut_obj_add_strbuf(doc, obj, "pacmanBranch", &counts.pacmanBranch);
+ }
+
+ void ffPrintPackagesHelpFormat(void)
+ {
+-    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_PACKAGES_MODULE_NAME, "{2} (pacman){?3}[{3}]{?}, {4} (dpkg), {5} (rpm), {6} (emerge), {7} (eopkg), {8} (xbps), {9} (nix-system), {10} (nix-user), {11} (nix-default), {12} (apk), {13} (pkg), {14} (flatpak-system), {15} (flatpack-user), {16} (snap), {17} (brew), {18} (brew-cask), {19} (MacPorts), {20} (scoop), {21} (choco), {22} (pkgtool), {23} (paludis), {24} (winget), {25} (opkg), {26} (am), {27} (sorcery), {28} (lpkg), {29} (lpkgbuild), {30} (guix-system), {31} (guix-user), {32} (guix-home), {33} (linglong)", FF_PACKAGES_NUM_FORMAT_ARGS, ((const char* []) {
++    FF_PRINT_MODULE_FORMAT_HELP_CHECKED(FF_PACKAGES_MODULE_NAME, "{2} (pacman){?3}[{3}]{?}, {4} (dpkg), {5} (rpm), {6} (emerge), {7} (eopkg), {8} (xbps), {9} (nix-system), {10} (nix-user), {11} (nix-default), {12} (apk), {13} (pkg), {14} (flatpak-system), {15} (flatpack-user), {16} (snap), {17} (brew), {18} (brew-cask), {19} (MacPorts),{20} (scoop), {21} (choco), {22} (pkgtool), {23} (paludis), {24} (winget), {25} (opkg), {26} (am), {27} (sorcery), {28} (lpkg), {29} (lpkgbuild), {30} (guix-system), {31} (guix-user), {32} (guix-home), {33} (linglong), {34} (qi)", FF_PACKAGES_NUM_FORMAT_ARGS, ((const char* []) {
+         "Number of all packages - all",
+         "Number of pacman packages - pacman",
+         "Pacman branch on manjaro - pacman-branch",
+@@ -458,6 +468,7 @@
+         "Number of guix-home packages - guix-home",
+         "Number of linglong packages - linglong",
+         "Number of pacstall packages - pacstall",
++        "Number of qi packages - qi",
+         "Total number of all nix packages - nix-all",
+         "Total number of all flatpak app packages - flatpak-all",
+         "Total number of all brew packages - brew-all",
+
