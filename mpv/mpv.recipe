@@ -1,0 +1,58 @@
+# Build recipe for $PKG.
+#
+
+# Exit immediately on any error
+set -e
+
+program=mpv
+version=0.38.0
+_gitrev=02254b92dd237f03aa0a151c2a68778c4ea848f9
+release=0
+description="Video player based on MPlayer/mplayer2"
+homepage="https://mpv.io/"
+license="GPL-2.0-or-later"
+
+tarname=mpv-$_gitrev.tar.gz
+fetch="https://github.com/mpv-player/mpv/archive/$_gitrev/$tarname"
+
+srcdir=mpv-$_gitrev
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	rm -rf BUILD
+	mkdir BUILD
+	cd BUILD
+
+	patch -p1 -d .. < "${worktree}/patches/mpv/meson-libcaca-version.patch"
+	
+	CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+	meson setup $configure_args \
+		-Dalsa=enabled \
+		-Dbuild-date=false \
+		-Dcaca=enabled \
+		-Degl-drm=enabled \
+		-Degl-wayland=enabled \
+		-Degl=enabled \
+		-Dgl=enabled \
+		-Djack=enabled \
+		-Dlibmpv=true \
+		-Dpulse=enabled \
+		-Dtests="false" \
+		-Duchardet=enabled \
+		-Dvdpau=disabled \
+		-Dvulkan=enabled \
+		-Dx11=disabled \
+		..
+	
+	ninja -j2
+	DESTDIR="$destdir" ninja -j2 install
+	
+	cd ..
+}
