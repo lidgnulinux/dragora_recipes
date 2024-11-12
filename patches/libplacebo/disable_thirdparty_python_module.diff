@@ -1,0 +1,15 @@
+--- libplacebo-v6.338.2/meson.build	2024-01-23 00:48:51.000000000 +0700
++++ libplacebo-v6.338.2.new/meson.build	2024-11-12 15:56:37.591063243 +0700
+@@ -440,9 +440,9 @@
+ thirdparty = meson.project_source_root()/'3rdparty'
+ python = import('python').find_installation()
+ python_env = environment()
+-python_env.append('PYTHONPATH', thirdparty/'jinja/src')
+-python_env.append('PYTHONPATH', thirdparty/'markupsafe/src')
+-python_env.append('PYTHONPATH', thirdparty/'glad')
++# python_env.append('PYTHONPATH', thirdparty/'jinja/src')
++# python_env.append('PYTHONPATH', thirdparty/'markupsafe/src')
++# python_env.append('PYTHONPATH', thirdparty/'glad')
+ 
+ if host_machine.system() == 'windows'
+     threads = declare_dependency()
