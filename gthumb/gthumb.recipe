@@ -1,0 +1,54 @@
+# Build recipe for gthumb.
+#
+
+# Exit immediately on any error
+set -e
+
+program=gthumb
+version=3.12.6
+release=0
+description="Image viewer and browser from GNOME"
+homepage="https://gitlab.gnome.org/GNOME/gthumb"
+license="GPL-2.0-or-later"
+
+tarname=gthumb-$version.tar.gz
+fetch="https://gitlab.gnome.org/GNOME/gthumb/-/archive/$version/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	rm -rf BUILD
+	mkdir BUILD
+	cd BUILD
+	
+	CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+	meson setup $configure_args \
+		-Dwarn-deprecated=false \
+		-Dexiv2=true \
+		-Dclutter=false \
+		-Dgstreamer=true \
+		-Dlibchamplain=false \
+		-Dlcms2=true \
+		-Dcolord=false \
+		-Dlibtiff=true \
+		-Dlibwebp=false \
+		-Dlibjxl=false \
+		-Dlibheif=false \
+		-Dlibraw=false \
+		-Dlibrsvg=true \
+		-Dlibsecret=false \
+		-Dwebservices=false \
+		-Dlibbrasero=false \
+		..
+	
+	ninja -j2
+	DESTDIR="$destdir" ninja -j2 install
+	
+	cd ..
+}

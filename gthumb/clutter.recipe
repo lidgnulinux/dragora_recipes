@@ -1,0 +1,40 @@
+# Build recipe for clutter.
+#
+
+# Exit immediately on any error
+set -e
+
+program=clutter
+version=1.26.4
+release=0
+description="Library for creating fast, visually-appealing interfaces"
+homepage="https://wiki.gnome.org/Projects/Clutter"
+license="LGPL-2.0-or-later"
+
+tarname=clutter-$version.tar.xz
+fetch="https://download.gnome.org/sources/clutter/${version%.*}/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--with-x \
+		--enable-gdk-backend \
+		--enable-egl-backend \
+		--enable-wayland-backend \
+		--enable-x11-backend \
+		--enable-evdev-input
+
+	make 
+	make DESTDIR="$destdir" install 
+}

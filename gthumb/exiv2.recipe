@@ -1,0 +1,43 @@
+# Build recipe for exiv2.
+#
+
+# Exit immediately on any error
+set -e
+
+program=exiv2
+version=0.28.3
+release=0
+description="Exif and Iptc metadata manipulation library and tools."
+homepage="https://exiv2.org/"
+license="GPL-2.0-or-later"
+
+tarname=exiv2-v$version.tar.gz
+fetch="https://github.com/Exiv2/exiv2/archive/refs/tags/v$version/$tarname"
+
+srcdir=
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DEXIV2_BUILD_SAMPLES=OFF \
+		-DEXIV2_ENABLE_BMFF=ON \
+		-DEXIV2_ENABLE_WEBREADY=ON \
+		-DEXIV2_ENABLE_BROTLI=OFF \
+		-DEXIV2_ENABLE_INIH=OFF \
+		-DEXIV2_BUILD_UNIT_TESTS="OFF"
+
+	ninja -C build
+	DESTDIR="$destdir" ninja -C build install 
+}
