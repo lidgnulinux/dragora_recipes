@@ -1,0 +1,37 @@
+# Build recipe for libxscrnsaver.
+#
+
+# Exit immediately on any error
+set -e
+
+program=libxscrnsaver
+version=1.2.3
+release=0
+description="X.Org screen saver extension"
+homepage="https://cgit.freedesktop.org/xorg/lib/libXScrnSaver/"
+license="MIT"
+
+tarname=libXScrnSaver-$version.tar.bz2
+fetch="https://www.x.org/releases/individual/lib/$tarname"
+
+srcdir=libXScrnSaver-$version
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	./configure \
+		--disable-static \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--prefix=/usr
+
+	make 
+	make DESTDIR="$destdir" install 
+}

@@ -39,6 +39,7 @@ build()
 		-Dcaca=enabled \
 		-Degl-drm=enabled \
 		-Degl-wayland=enabled \
+		-Degl-x11=enabled \
 		-Degl=enabled \
 		-Dgl=enabled \
 		-Djack=enabled \
@@ -48,7 +49,7 @@ build()
 		-Duchardet=enabled \
 		-Dvdpau=disabled \
 		-Dvulkan=enabled \
-		-Dx11=disabled \
+		-Dx11=enabled \
 		..
 	
 	ninja -j2
