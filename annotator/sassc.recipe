@@ -1,0 +1,37 @@
+# Build recipe for sassc.
+#
+
+# Exit immediately on any error
+set -e
+
+program=sassc
+version=3.6.2
+release=0
+description="Libsass command line driver"
+homepage="https://github.com/sass/sassc"
+license="MIT"
+
+tarname=$version.tar.gz
+fetch="https://github.com/sass/sassc/archive/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	cat <<- __EOF__ > version.sh
+		echo $version
+	__EOF__
+
+	autoreconf -vif
+	./configure \
+		--disable-static \
+		--prefix=/usr
+
+	make 
+	make DESTDIR="$destdir" install 
+}
