@@ -1,0 +1,48 @@
+# Build recipe for imagemagick.
+#
+
+# Exit immediately on any error
+set -e
+
+program=imagemagick
+version=7.1.1.32
+_pkgver=${version%.*}-${version##*.}
+release=0
+description="Collection of tools and libraries for many image formats"
+homepage="https://imagemagick.org/"
+license="ImageMagick"
+
+tarname=ImageMagick-$_pkgver.tar.xz
+fetch="https://imagemagick.org/archive/releases/$tarname"
+
+srcdir=ImageMagick-$_pkgver
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	CFLAGS="$CFLAGS -O2 -Doff64_t=__off64_t" \
+	CXXFLAGS="$CXXFLAGS -O2" \
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--enable-static \
+		--with-gslib \
+		--with-modules \
+		--with-png \
+		--with-rsvg \
+		--with-threads \
+		--with-tiff \
+		--with-x \
+		--with-xml
+
+	make -j2 
+	make DESTDIR="$destdir" install 
+}
