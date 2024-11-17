@@ -29,8 +29,6 @@ build()
     # Set sane permissions
     chmod -R u+w,go-w,a+rX-s .
 	
-    # rm -rf src/3rdparty/yyjson
-
     # patch to add qi package detection
     patch -p1 < "${worktree}/patches/fastfetch/qi_packages_detection_2.29.0.patch"
 
@@ -38,6 +36,7 @@ build()
 	-DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_INSTALL_LIBDIR=lib \
 	-DCMAKE_BUILD_TYPE=Release \
+	-DENABLE_SYSTEM_YYJSON=OFF \
 	-DENABLE_DIRECTX_HEADERS=OFF
 
     cmake --build build --target fastfetch --target flashfetch
