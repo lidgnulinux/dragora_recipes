@@ -1,0 +1,71 @@
+# Build recipe for x265.
+#
+
+# Exit immediately on any error
+set -e
+
+program=x265
+version=3.6
+release=0
+description="Open Source H265/HEVC video encoder"
+homepage="https://www.videolan.org/developers/x265.html"
+license="GPL-2.0-or-later"
+
+tarname=x265_$version.tar.gz
+fetch="https://bitbucket.org/multicoreware/x265_git/downloads/$tarname"
+
+srcdir=${program}_${version}
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	export CFLAGS="$CFLAGS -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -flto=auto"
+
+	# CMAKE_BUILD_TYPE - Don't change to None! This is a video encoder,
+	#   performance is the most important.
+	# shellcheck disable=2046
+	cmake -B build-12 -S source -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DHIGH_BIT_DEPTH=TRUE \
+		-DMAIN12=TRUE \
+		-DEXPORT_C_API=FALSE \
+		-DENABLE_CLI=FALSE \
+		-DENABLE_SHARED=FALSE \
+		-DCMAKE_ASM_NASM_FLAGS=-w-macro-params-legacy
+	cmake --build build-12
+
+	cmake -B build-10 -S source -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DHIGH_BIT_DEPTH=TRUE \
+		-DEXPORT_C_API=FALSE \
+		-DENABLE_CLI=FALSE \
+		-DENABLE_SHARED=FALSE \
+		-DCMAKE_ASM_NASM_FLAGS=-w-macro-params-legacy
+	cmake --build build-10
+
+	ln -s ../build-10/libx265.a build/libx265_main10.a
+	ln -s ../build-12/libx265.a build/libx265_main12.a
+
+	cmake -B build -S source -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DEXTRA_LIB='x265_main10.a;x265_main12.a' \
+		-DEXTRA_LINK_FLAGS='-L.' \
+		-DLINKED_10BIT=TRUE \
+		-DLINKED_12BIT=TRUE \
+		-DENABLE_CLI=FALSE \
+		-DCMAKE_ASM_NASM_FLAGS=-w-macro-params-legacy
+
+	cmake --build build
+
+	DESTDIR="$destdir" cmake --install build
+}
