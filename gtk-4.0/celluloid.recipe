@@ -5,8 +5,8 @@
 set -e
 
 program=celluloid
-version=0.26
-release=1
+version=0.27
+release=2
 description="A simple GTK+ frontend for mpv (formerly gnome-mpv)"
 homepage="https://celluloid-player.github.io/"
 license="GPL-3.0-or-later"
@@ -27,7 +27,7 @@ build()
 	mkdir BUILD
 	cd BUILD
 	
-	patch -p0 -d .. < "${worktree}/patches/celluloid/missing_plus_symbol.diff"
+	patch -p0 -d .. < "${worktree}/patches/celluloid/missing_plus_symbol_0.27.diff"
 	
 	CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
 	meson setup $configure_args ..

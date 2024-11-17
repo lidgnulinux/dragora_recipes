@@ -1,0 +1,11 @@
+--- src/celluloid-video-area.c	2024-06-20 21:00:23.762432671 +0700
++++ src/celluloid-video-area.c.new	2024-11-17 12:56:41.300085633 +0700
+@@ -752,7 +752,7 @@
+ 				_("Welcome") );
+ 		adw_status_page_set_description
+ 			(	ADW_STATUS_PAGE(area->initial_page),
+-				_("Press ＋ or drag your video file here.") );
++				_("Press + or drag your video file here.") );
+ 		gtk_stack_set_visible_child
+ 			(GTK_STACK(area->stack), area->initial_page);
+ 		break;
