@@ -1,0 +1,36 @@
+# Build recipe for x265.
+#
+
+# Exit immediately on any error
+set -e
+
+program=x265
+version=3.6
+release=0
+description="Open Source H265/HEVC video encoder"
+homepage="https://www.videolan.org/developers/x265.html"
+license="GPL-2.0-or-later"
+
+tarname=x265_$version.tar.gz
+fetch="https://bitbucket.org/multicoreware/x265_git/downloads/$tarname"
+
+srcdir=${program}_${version}
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	export CFLAGS="$CFLAGS -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -flto=auto"
+
+	cd build/linux/
+	bash make-Makefiles.bash
+
+	make -j2
+	make DESTDIR="$destdir" install 
+}
