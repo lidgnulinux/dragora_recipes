@@ -7,7 +7,7 @@ set -e
 program=imagemagick
 version=7.1.1.32
 _pkgver=${version%.*}-${version##*.}
-release=0
+release=1
 description="Collection of tools and libraries for many image formats"
 homepage="https://imagemagick.org/"
 license="ImageMagick"
@@ -26,7 +26,7 @@ build()
 	# Set sane permissions
 	chmod -R u+w,go-w,a+rX-s .
 
-	CFLAGS="$CFLAGS -O2 -Doff64_t=__off64_t" \
+	CFLAGS="$CFLAGS -O2" \
 	CXXFLAGS="$CXXFLAGS -O2" \
 	./configure \
 		--prefix=/usr \
@@ -36,6 +36,8 @@ build()
 		--enable-static \
 		--with-gslib \
 		--with-modules \
+		--with-perl \
+		--with-perl-options="INSTALLDIRS=vendor INSTALLVENDORARCH=/usr/lib64/perl5/vendor_perl NO_PACKLIST=1 NO_PERLLOCAL=1" \
 		--with-png \
 		--with-rsvg \
 		--with-threads \
@@ -44,5 +46,5 @@ build()
 		--with-xml
 
 	make -j2 
-	make DESTDIR="$destdir" install 
+	make DESTDIR="$destdir" CCCDLFLAGS="-Doff64_t=off_t -fPIC" install 
 }
