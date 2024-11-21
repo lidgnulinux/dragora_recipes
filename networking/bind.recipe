@@ -1,0 +1,47 @@
+# Build recipe for bind.
+#
+
+# Exit immediately on any error
+set -e
+
+program=bind
+version=9.18.31
+_ver=${version%_p*}
+_major=${version%%.*}
+release=1
+description="The ISC DNS server"
+homepage="https://www.isc.org/"
+license="MPL-2.0"
+pkgcategory=networking
+
+tarname=bind-9.18.31.tar.xz
+fetch="https://downloads.isc.org/isc/bind$_major/$_ver/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	export CFLAGS="$CFLAGS -D_GNU_SOURCE"
+
+	autoreconf -vif
+	./configure \
+		--disable-static \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--with-libxml2 \
+		--with-json-c \
+		--enable-largefile \
+		--enable-linux-caps \
+		--enable-shared \
+		--disable-static
+
+	make 
+	make DESTDIR="$destdir" install 
+}
