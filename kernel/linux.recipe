@@ -18,7 +18,7 @@
 set -e
 
 program=linux
-version=6.12-rc4
+version=6.12
 release=1
 
 # Define a category for the output of the package name
@@ -27,7 +27,7 @@ pkgcategory=kernel
 tarname=${program}-${version}.tar.gz
 
 # Remote source(s)
-fetch=https://git.kernel.org/torvalds/t/$tarname
+fetch=https://cdn.kernel.org/pub/linux/kernel/v6.x/$tarname
 
 homepage=https://www.kernel.org
 
@@ -50,7 +50,7 @@ build()
     make mrproper
 
     echo "Copying config-amd64_generic ..."
-    cp -p "${worktree}/archive/kernel/config" .config
+    cp -p "${worktree}/archive/kernel/config-6.12" .config
 
     # An environment variable for config purposes
     if test ! -z "$PRESERVE"
