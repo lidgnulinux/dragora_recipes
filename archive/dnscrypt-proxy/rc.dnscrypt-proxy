@@ -22,6 +22,7 @@ OPTS="-config $CONFDIR/dnscrypt-proxy.toml"
 
 # Start dnscrypt-proxy
 start() {
+  mkdir /var/run/dnscrypt-proxy
   echo -e "\nStarting $PRGNAM..."
   if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE" 2>/dev/null) 2>/dev/null; then
     echo -e "$PRGNAM already up\n"
