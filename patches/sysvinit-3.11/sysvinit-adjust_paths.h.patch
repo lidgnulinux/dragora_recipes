@@ -1,0 +1,13 @@
+--- sysvinit-3.11/src/paths.h	2024-10-22 01:31:27.000000000 +0700
++++ sysvinit-3.11.new/src/paths.h	2024-11-24 15:40:22.374146413 +0700
+@@ -45,8 +45,8 @@
+ #define INITLVL2	"/var/log/initrunlvl"	/* COMPAT: New runlevel */
+ 				/* Note: INITLVL2 definition needs INITLVL */
+ #define HALTSCRIPT1	"/etc/init.d/halt"	/* Called by "fast" shutdown */
+-#define HALTSCRIPT2	"/etc/rc.d/rc.0"	/* Called by "fast" shutdown */
++#define HALTSCRIPT2	"/etc/rc.d/rc.shutdown"	/* Called by "fast" shutdown */
+ #define REBOOTSCRIPT1	"/etc/init.d/reboot"	/* Ditto. */
+-#define REBOOTSCRIPT2	"/etc/rc.d/rc.6"	/* Ditto. */
++#define REBOOTSCRIPT2	"/etc/rc.d/rc.reboot"	/* Ditto. */
+ #endif
+ 
