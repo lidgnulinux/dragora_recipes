@@ -1,0 +1,28 @@
+# Build recipe for tree-sitter.
+#
+
+# Exit immediately on any error
+set -e
+
+program=tree-sitter
+version=0.22.2
+release=0
+description="Incremental parsing system for programming tools"
+homepage="https://tree-sitter.github.io/"
+license="MIT"
+
+tarname=v$version.tar.gz
+fetch="https://github.com/tree-sitter/tree-sitter/archive/refs/tags/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	make 
+	make DESTDIR="$destdir" PREFIX=/usr install 
+}
