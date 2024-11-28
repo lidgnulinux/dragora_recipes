@@ -1,0 +1,35 @@
+# Build recipe for xsel.
+#
+
+# Exit immediately on any error
+set -e
+
+program=xsel
+version=1.2.1
+release=0
+description="Command-line program for manipulating the X selection"
+homepage="http://www.vergenet.net/~conrad/software/xsel"
+license="MIT"
+
+tarname=$version.tar.gz
+fetch="https://github.com/kfish/xsel/archive/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	autoreconf -fi
+	./configure \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--prefix=/usr
+
+	make 
+	make DESTDIR="$destdir" install 
+}

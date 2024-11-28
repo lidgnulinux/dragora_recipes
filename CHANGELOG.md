@@ -14,6 +14,7 @@
     - wayland 1.23.1
     - wl-clipboard 2.2.0
     - wofi 1.4.1
+    - wlroots 0.18.1
 
 
 1. Kernel and init related packages.
@@ -64,7 +65,6 @@
     - bind 9.18.31
     - ca-certificates 20240705
     - curl 8.10.1
-    - dhcpcd 9.4.1
     - dnscrypt-proxy 2.1.5
     - libressl 3.9.2
     - lynx 2.9.1
