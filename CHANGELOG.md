@@ -71,3 +71,4 @@
     - net-tools 2.10
     - nspr 4.35
     - nss 3.103
+    - lftp 4.9.2
