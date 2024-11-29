@@ -1,0 +1,42 @@
+diff --git a/src/term.c b/src/term.c
+index ea68917..4557eed 100644
+--- a/src/term.c
++++ b/src/term.c
+@@ -122,6 +122,15 @@ on_key_press(GtkWidget *terminal, GdkEventKey *event, gpointer user_data)
+ 		case GDK_KEY_V:
+ 			vte_terminal_paste_clipboard(VTE_TERMINAL(terminal));
+ 			return TRUE;
++		case GDK_KEY_C:
++			vte_terminal_copy_clipboard_format(VTE_TERMINAL(terminal), 1);
++			return TRUE;
++		case GDK_KEY_K:
++			vte_terminal_copy_primary(VTE_TERMINAL(terminal));
++			return TRUE;
++		case GDK_KEY_P:
++			vte_terminal_paste_primary(VTE_TERMINAL(terminal));
++			return TRUE;
+ 		}
+ 		/* fallthrough */
+ 	case GDK_CONTROL_MASK:
+@@ -257,7 +266,7 @@ command_line(GApplication *app, GApplicationCommandLine *cmdline, gpointer user_
+ 	vte_terminal_set_word_char_exceptions(VTE_TERMINAL(terminal),
+ 	    TERM_WORD_CHARS);
+ 	vte_terminal_set_scrollback_lines(VTE_TERMINAL(terminal),
+-	    0);
++	    1000);
+ 	vte_terminal_set_scroll_on_output(VTE_TERMINAL(terminal),
+ 	    FALSE);
+ 	vte_terminal_set_scroll_on_keystroke(VTE_TERMINAL(terminal),
+diff --git a/src/term.h b/src/term.h
+index a206e08..6fe279b 100644
+--- a/src/term.h
++++ b/src/term.h
+@@ -31,7 +31,7 @@
+ /* Terminal opacity */
+ #define TERM_OPACITY 0.9
+ /* Terminal font */
+-#define TERM_FONT "Iosevka Term SS18 10"
++#define TERM_FONT "monospace 10"
+ 
+ gboolean dabbrev_expand(GtkWindow *, VteTerminal *);
+ void dabbrev_stop(VteTerminal *);
