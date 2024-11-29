@@ -1,0 +1,38 @@
+# Build recipe for i3wm.
+#
+
+# Exit immediately on any error
+set -e
+
+program=i3wm
+version=4.23
+release=0
+description="Improved dynamic tiling window manager"
+homepage="https://i3wm.org"
+license="BSD-3-Clause"
+
+tarname=i3-$version.tar.xz
+fetch="https://i3wm.org/downloads/$tarname"
+srcdir=i3-$version
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	rm -rf BUILD
+	mkdir BUILD
+	cd BUILD
+	
+	CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+	meson setup $configure_args ..
+	
+	ninja -j2
+	DESTDIR="$destdir" ninja -j2 install
+	
+	cd ..
+}
