@@ -1,0 +1,123 @@
+# Build recipe for gdb.
+#
+# Copyright (c) 2018-2019, 2021-2023 Matias Fonzo, <selk@dragora.org>.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Exit immediately on any error
+set -e
+
+program=gdb
+version=14.2
+release=0
+
+# Define a category for the output of the package name
+pkgcategory=devel
+
+tarname=${program}-${version}.tar.gz
+
+# Remote source(s)
+fetch=https://ftp.gnu.org/gnu/gdb/$tarname
+
+description="
+The GNU debugger.
+
+GDB, the GNU Project debugger, allows you to see what is going on
+inside another program while it executes, or what another program
+was doing at the moment it crashed.
+"
+
+homepage=https://www.gnu.org/software/gdb
+license="GPLv2+, GPLv3+, LGPLv2, LGPLv3"
+
+# Source documentation
+docs="COPYING* ChangeLog README*"
+docsdir="${docdir}/${program}-${version}"
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    patch -Np1 < "${worktree}/gcore-sh.patch"
+    patch -Np1 < "${worktree}/s390x-use-elf-gdb_fpregset_t.patch"
+    patch -Np1 < "${worktree}/ppc-musl.patch"
+    patch -Np1 < "${worktree}/ppc-ptregs.patch"
+    patch -Np1 < "${worktree}/musl-signals.patch"
+
+    # Create a separate build directory
+    rm -rf BUILD
+    mkdir BUILD
+    cd BUILD
+
+    ../configure CPPFLAGS="$QICPPFLAGS" \
+    CFLAGS="$QICFLAGS" CXXFLAGS="$QICXXFLAGS" LDFLAGS="$QILDFLAGS" \
+     $configure_args \
+     --libdir=/usr/lib64 \
+     --infodir=$infodir \
+     --mandir=$mandir \
+     --docdir=$docsdir \
+     --enable-compressed-debug-sections=none \
+     --with-python=/usr/bin/python3 \
+     --with-system-zlib \
+     --with-system-readline \
+     --with-guile=guile-3.0 \
+     --build="$(gcc -dumpmachine)"
+
+    make -j2 V=1
+    make -j2 DESTDIR="$destdir" install
+
+    cd ../
+
+    # Delete generated charset.alias
+    rm -f "${destdir}/usr/lib64/charset.alias"
+
+    # Delete files belonging to the binutils package
+    rm -f \
+     "${destdir}"/usr/include/*.h \
+     "${destdir}/usr/lib64/libbfd.a" \
+     "${destdir}/usr/lib64/libopcodes.a" \
+     "${destdir}/usr/lib64/libbfd.la" \
+     "${destdir}/usr/lib64/libopcodes.la" \
+     "${destdir}/${infodir}/bdf.info"
+
+    # Compress info documents deleting index file for the package
+    if test -d "${destdir}/$infodir"
+    then
+        rm -f "${destdir}/${infodir}/dir"
+        lzip -9 "${destdir}/${infodir}"/*
+    fi
+
+    # Compress and link man pages (if needed)
+    if test -d "${destdir}/$mandir"
+    then
+        (
+            cd "${destdir}/$mandir"
+            find . -type f -exec lzip -9 {} +
+            find . -type l | while read -r file
+            do
+                ln -sf "$(readlink -- "$file").lz" "${file}.lz"
+                rm -- "$file"
+            done
+        )
+    fi
+
+    # Copy documentation
+    mkdir -p "${destdir}/$docsdir"
+    cp -p $docs "${destdir}/$docsdir"
+}
+
