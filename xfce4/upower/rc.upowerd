@@ -9,7 +9,7 @@ elif [ "$1" = "restart" ]; then
   echo "Restarting upowerd..."
   kill "$(pgrep upowerd)" 
   sleep 1
-  /usr/libexec/upowerd
+  /usr/libexec/upowerd &
 else # assume $1 = start:
   echo "Starting upowerd:  /usr/libexec/upowerd"
   /usr/libexec/upowerd &
