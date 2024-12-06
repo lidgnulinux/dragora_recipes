@@ -4,7 +4,7 @@
 set -e
 
 program=fastfetch
-version=2.29.0
+version=2.31.0
 release=0
 
 # Define a category for the output of the package name
@@ -29,9 +29,6 @@ build()
     # Set sane permissions
     chmod -R u+w,go-w,a+rX-s .
 	
-    # patch to add qi package detection
-    patch -p1 < "${worktree}/patches/fastfetch/qi_packages_detection_2.29.0.patch"
-
     cmake -B build -G Ninja \
 	-DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_INSTALL_LIBDIR=lib \
