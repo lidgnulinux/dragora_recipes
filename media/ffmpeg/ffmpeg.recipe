@@ -6,7 +6,7 @@ set -e
 
 program=ffmpeg
 version=6.1.1
-release=1
+release=2
 description="Complete and free Internet live audio and video broadcasting solution for Linux/Unix"
 homepage="https://ffmpeg.org/"
 license="GPL-2.0-or-later AND LGPL-2.1-or-later"
@@ -70,6 +70,7 @@ build()
 		--enable-version3 \
 		--enable-vulkan \
 		--enable-asm \
+		--enable-openssl \
 		--extra-libs="-lpthread" \
 		--pkg-config="pkg-config --static" \
 		--optflags="-O3"
