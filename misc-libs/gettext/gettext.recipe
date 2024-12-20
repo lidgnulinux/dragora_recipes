@@ -1,0 +1,71 @@
+# Build recipe for gettext.
+#
+# Copyright (c) 2022 Matias Fonzo, <selk@dragora.org>.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Exit immediately on any error
+set -e
+
+program=gettext
+version=0.22.5
+release=1
+
+# Define a category for the output of the package name
+pkgcategory=libs
+
+tarname=${program}-${version}.tar.lz
+
+# Remote source(s)
+fetch=https://ftp.gnu.org/gnu/gettext/$tarname
+
+description="
+Utilities for internationalization and localization.
+
+The GNU gettext package contains utilities for internationalization
+and localization.  These allow programs to be compiled with NLS
+(Native Language Support), enabling them to output messages in the
+user's native language.
+"
+
+homepage=https://www.gnu.org/software/gettext
+license=GPLv3+
+jobs=2
+
+build()
+{
+    unpack "${tardir}/$tarname"
+
+    cd "$srcdir"
+
+    # Set sane permissions
+    chmod -R u+w,go-w,a+rX-s .
+
+    patch -p1 < "${worktree}/gettext.cwd.patch"
+    patch -p1 < "${worktree}/gettext.musl-realpath.patch"
+    patch -p1 < "${worktree}/gettext.skip-tests-musl.patch"
+
+    ./configure CPPFLAGS="$QICPPFLAGS" \
+    CFLAGS="$QICFLAGS" CXXFLAGS="$QICXXFLAGS" LDFLAGS="$QILDFLAGS" \
+     $configure_args \
+     --libdir=/usr/lib64 \
+     --htmldir=${docsdir}/html \
+     --enable-shared=yes \
+     --enable-static=no \
+     --disable-java \
+     --build="$(gcc -dumpmachine)"
+
+    make -j${jobs} V=1
+    make -j${jobs} DESTDIR="$destdir" install-strip
+}
+
