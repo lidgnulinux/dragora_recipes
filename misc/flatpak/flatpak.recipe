@@ -5,8 +5,8 @@
 set -e
 
 program=flatpak
-version=1.14.10
-release=0
+version=1.15.12
+release=1
 
 # Define a category for the output of the package name
 pkgcategory=tool
@@ -23,39 +23,39 @@ license="LGPL-2.1-or-later"
 
 build()
 {
-    unpack "${tardir}/$tarname"
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
 
-    cd "$srcdir"
+	rm -rf BUILD
+	mkdir BUILD
+	cd BUILD
+	
+	CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
+	meson setup $configure_args \
+		-Ddbus_config_dir=/usr/share/dbus-1/system.d \
+		-Dauto_sideloading=false \
+		-Ddocbook_docs=disabled \
+		-Dgdm_env_file=false \
+		-Dgtkdoc=disabled \
+		-Dman=disabled \
+		-Dsystem_bubblewrap=bwrap \
+		-Dtests=false \
+		-Dsystem_dbus_proxy=xdg-dbus-proxy \
+		-Dsystem_helper_user=flatpak \
+		-Dsystem_fusermount=fusermount3 \
+		-Dselinux_module=disabled \
+		..
 
-    # Set sane permissions
-    chmod -R u+w,go-w,a+rX-s .
+	ninja -j2
+	DESTDIR="$destdir" ninja -j2 install
 
-    patch -p1 < "${worktree}/patches/flatpak/fusermount3.patch"
+	rm -rf "$destdir"/usr/lib/systemd
+	rm -rf "$destdir"/usr/lib/sysusers.d
+	rm -rf "$destdir"/usr/lib/tmpfiles.d
 
-    ./configure \
-    	--prefix=/usr \
-    	--sysconfdir=/etc \
-	--localstatedir=/var \
-	--sbindir=/usr/bin \
-	--libexecdir=/usr/lib/$program \
-	--disable-static \
-	--disable-documentation \
-	--with-curl \
-	--with-priv-mode=none \
-	--with-system-bubblewrap \
-	--with-system-helper-user=flatpak \
-	--with-system-dbus-proxy \
-	--with-system-dbus-proxy \
-	--with-gpgme-prefix=/usr \
-	--with-dbus-config-dir=/usr/share/dbus-1/system.d
-
-    make
-    make DESTDIR="$destdir" install
-
-    rm -rf "$destdir"/usr/lib/systemd
-    rm -rf "$destdir"/usr/lib/sysusers.d
-    rm -rf "$destdir"/usr/lib/tmpfiles.d
-
-    mkdir -p "$destdir"/etc/modprobe.d
-    install -Dm644 "${worktree}/archive/flatpak/modules-load.conf" "$destdir"/etc/modprobe.d/flatpak.conf
+	cd ..
 }
