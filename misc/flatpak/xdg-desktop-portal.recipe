@@ -5,8 +5,8 @@
 set -e
 
 program=xdg-desktop-portal
-version=1.18.4
-release=1
+version=1.19.0
+release=0
 
 # Define a category for the output of the package name
 pkgcategory=libs
@@ -34,12 +34,15 @@ build()
     mkdir BUILD
     cd BUILD
 
+    # patch -p1 -d .. < "${worktree}/patch_pytest.diff" 
+
     CPPFLAGS="$QICPPFLAGS" CFLAGS="$QICFLAGS" LDFLAGS="$QILDFLAGS" \
     meson setup $configure_args \
 	-Dsystemd=disabled \
 	-Dman-pages=disabled \
-	-Ddocbook-docs=disabled \
 	-Ddebug=true \
+	-Dpytest=disabled \
+	-Ddocumentation=disabled \
 	..
 
     ninja -j2
