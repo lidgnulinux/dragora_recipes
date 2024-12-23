@@ -40,7 +40,6 @@ build()
 	-Dbackend-gtk4=enabled \
 	-Dbackend-qt5=disabled \
 	-Ddocs=false \
-	-Dvapi=false \
 	..
 
     ninja -j2
