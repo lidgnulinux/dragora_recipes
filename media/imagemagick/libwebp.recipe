@@ -1,0 +1,38 @@
+# Build recipe for libwebp.
+#
+
+# Exit immediately on any error
+set -e
+
+program=libwebp
+version=1.4.0
+release=0
+description="Libraries for working with WebP images"
+homepage="https://developers.google.com/speed/webp"
+license="BSD-3-Clause"
+
+tarname=libwebp-$version.tar.gz
+fetch="https://storage.googleapis.com/downloads.webmproject.org/releases/webp/$tarname"
+
+build() 
+{
+	unpack "${tardir}/$tarname"
+	
+	cd "$srcdir"
+	
+	# Set sane permissions
+	chmod -R u+w,go-w,a+rX-s .
+
+	# autoreconf -vif
+	CFLAGS="$CFLAGS -O2 -flto=auto -ffat-lto-objects" \
+	./configure \
+		--disable-static \
+		--prefix=/usr \
+		--enable-libwebpmux \
+		--enable-libwebpdemux \
+		--enable-libwebpdecoder \
+		--disable-tiff # dependency-loop
+
+	make -j2 
+	make DESTDIR="$destdir" install 
+}

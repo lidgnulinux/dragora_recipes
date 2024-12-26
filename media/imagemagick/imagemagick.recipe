@@ -7,7 +7,7 @@ set -e
 program=imagemagick
 version=7.1.1.32
 _pkgver=${version%.*}-${version##*.}
-release=1
+release=2
 description="Collection of tools and libraries for many image formats"
 homepage="https://imagemagick.org/"
 license="ImageMagick"
@@ -43,8 +43,9 @@ build()
 		--with-threads \
 		--with-tiff \
 		--with-x \
+		--with-webp \
 		--with-xml
 
-	make -j2 
+	make HOSTCFLAG="-D_GNU_SOURCE" -j2 
 	make DESTDIR="$destdir" CCCDLFLAGS="-Doff64_t=off_t -fPIC" install 
 }
