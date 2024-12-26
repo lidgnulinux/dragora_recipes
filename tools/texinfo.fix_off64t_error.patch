@@ -1,0 +1,11 @@
+--- configure	2024-12-26 10:31:46.631015820 +0700
++++ configure.new	2024-12-26 10:31:43.185015801 +0700
+@@ -40631,7 +40631,7 @@
+   enable_xs=no
+   (cd tp/Texinfo/XS \
+    && make clean \
+-   && make TestXS.la \
++   && make CFLAGS="-Doff64_t=off_t -fPIC" TestXS.la \
+    && TEXINFO_XS=debug ; export TEXINFO_XS \
+    && ${PERL} -I . \
+               -I ${xs_srcdir} \
